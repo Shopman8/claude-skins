@@ -56,6 +56,8 @@ export type Prefs = {
   fold: boolean
   // Runs of reads and searches drawn open, as if each had been expanded, not as one line.
   expand: boolean
+  // The band's Compact button, and its nudge once the context is full enough to be worth it.
+  compact: boolean
   // While /skin calm is on, the parts it changed as they were before it, for calm off to
   // put back; null while it is off.
   calm: CalmSnapshot | null

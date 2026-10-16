@@ -16,7 +16,7 @@ import type { Chart } from './mermaid'
 import { blockRows } from './prose'
 import { MAX_MARKDOWN } from './reply'
 import type { Icons, Kind, Skin } from './skin'
-import { spinnerIcon, toolIcon } from './icons'
+import { spinnerColor, spinnerIcon, toolIcon } from './icons'
 import type { SpinnerMode } from './icons'
 import { chartSvg } from './svg-chart'
 import { codeSvg } from './svg-code'
@@ -278,7 +278,7 @@ export function desktopSpinnerRow(look: Look, Svg: SvgElement, mode: SpinnerMode
 
   return (
     <Box flexDirection="row" columnGap={1} alignItems="center">
-      <Svg source={spinnerIcon(mode, look.skin.palette.user)} alt={mode} width={20} height={20} />
+      <Svg source={spinnerIcon(mode, spinnerColor(mode, look.skin.palette))} alt={mode} width={20} height={20} />
       <Text color={look.skin.palette.muted}>{text}</Text>
     </Box>
   )
@@ -895,31 +895,35 @@ export const COMPACT_NUDGE = 70
 
 export const COMPACT_HOTKEY = '0'
 
+// One drawing or line per meter, so the band can spread them evenly across its width. Whether
+// the rings fill in is still decided once for the whole band, keyed on every meter, so they
+// fill together when any number changes and hold still together otherwise.
 function meterView(look: Look, meters: readonly Meter[]) {
-  const { Box, Text } = look.ui
+  const { Text } = look.ui
   const { palette } = look.skin
 
   if (look.svg !== undefined) {
     const Svg = look.svg
-    const built = usageSvg(meters, palette)
+    const builds = meters.map(meter => ({ meter, built: usageSvg([meter], palette, true) }))
+    const entranceMs = Math.max(0, ...builds.map(({ built }) => built.entranceMs))
+    const isFirst = look.isFirstDraw === undefined || look.isFirstDraw(`usage:${metersKey(meters)}`, entranceMs)
 
-    return <Svg source={sourceOf(look, `usage:${metersKey(meters)}`, built)} alt={built.alt} width={built.width} height={built.height} />
+    return builds.map(({ meter, built }) => (
+      <Svg key={`usage-${meter.label}`} source={isFirst ? built.source : settled(built.source)} alt={built.alt} width={built.width} height={built.height} />
+    ))
   }
 
-  return (
-    <Box flexDirection="row" columnGap={3}>
-      {usageLine(meters).map(meter => (
-        <Text color={palette.muted}>
-          <Text color={palette.user}>{meter.bar}</Text>
-          {` ${meter.text}`}
-        </Text>
-      ))}
-    </Box>
-  )
+  return usageLine(meters).map(meter => (
+    <Text color={palette.muted}>
+      <Text color={palette.user}>{meter.bar}</Text>
+      {` ${meter.text}`}
+    </Text>
+  ))
 }
 
-// The band above the prompt: the meters, and a Compact button that becomes the main
-// action, with a word on why, once the context is full enough to be worth it.
+// The band above the prompt: the meters, spread evenly, and a Compact button that becomes
+// the main action, with a word on why, once the context is full enough to be worth it.
+// `/skin compact off` drops the button and the word, and the meters take the whole width.
 export function usageBand(look: Look, meters: readonly Meter[], canCompact: boolean, compact: () => void) {
   const { Box, Text, Button } = look.ui
   const { palette } = look.skin
@@ -929,8 +933,9 @@ export function usageBand(look: Look, meters: readonly Meter[], canCompact: bool
   return (
     // The right edge stays clear: the band draws its own collapse mark ([-]) there.
     <Box flexDirection="row" alignItems="center" columnGap={2} paddingRight={5}>
-      {meterView(look, meters)}
-      <Box flexGrow={1} />
+      <Box flexDirection="row" alignItems="center" columnGap={3} justifyContent="space-evenly" flexGrow={1}>
+        {meterView(look, meters)}
+      </Box>
       {canCompact && isNudge ? <Text color={palette.warn}>{`Context is ${context}% full`}</Text> : ''}
       {canCompact ? (
         // A digit hotkey: typed alone into an empty prompt it presses the band's button, which

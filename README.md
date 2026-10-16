@@ -61,13 +61,14 @@ To keep it installed but go back to Claude Code's own drawing, run `/skin off`.
 | `/skin <name>` | Switch skin: `noir`, `tokyo-night`, `dracula`, `catppuccin`, `rose-pine`, `nord`, `gruvbox`, `kanagawa`, `everforest`, `one-dark`, `solarized`, `night-owl`, `ayu`, `github`, `mono` |
 | `/skin list` | Every skin, yours included |
 | `/skin off` | Back to Claude Code's own drawing |
-| `/skin rail\|shimmer\|band\|countdown\|clip\|markdown\|quiet\|charts\|math\|commands\|shell\|highlight\|hints\|links\|copy\|fold\|expand on\|off` | Toggle one part |
+| `/skin rail\|shimmer\|band\|countdown\|clip\|markdown\|quiet\|charts\|math\|commands\|shell\|highlight\|hints\|links\|copy\|fold\|expand\|compact on\|off` | Toggle one part |
 | `/skin calm` · `calm off` | No motion, one line per tool row, read-only output folded, failures always whole. `calm off` puts back what you had |
 | `/skin copy` · `copy code` | Copy Claude's last reply, or just its last code block |
 | `/skin tables on\|text\|off` | `text` draws tables and code as selectable text on the desktop |
 | `/skin prompt left\|right\|plain` | In the terminal, which side your prompt's outline sits on, or `plain` for a leading marker instead. The desktop keeps Claude Code's own messages, with copy and rewind |
 | `/skin words claude\|skin` | Whose words the spinner and the turn footer show. `claude` keeps Claude Code's own, whatever the skin says; `skin` (the default) draws the skin's |
 | `/skin expand on\|off` | `on` opens every run of reads and searches, with its rows, instead of the one line `Read 3 · Search 2`; click the first line to fold a group back to that line, and again to open it. `off` (the default) keeps the line, and a group you open yourself stays open |
+| `/skin compact on\|off` | `on` (the default) puts a Compact button in the band above the prompt, with a nudge from 70% context. `off` leaves the band to the meters; run `/compact` yourself |
 | `/skin gallery` | Every element the skin draws, numbered, to point at |
 | `/skin pin` · `unpin` · `share` | Give this folder its own look, drop it, or make it the default |
 

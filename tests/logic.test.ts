@@ -240,6 +240,17 @@ test('expand opens every tool group, is off by default, and anything but a boole
   expect(runSkinCommand('list', { ...DEFAULT_PREFS, expand: true }, NAMES).message).toContain('expand on')
 })
 
+test('compact keeps the band’s Compact button by default, and anything but a boolean stored reads as on', async () => {
+  expect(DEFAULT_PREFS.compact).toBe(true)
+  expect(parsePrefs({ compact: false }, NAMES).compact).toBe(false)
+  expect(parsePrefs({ compact: 'no' }, NAMES).compact).toBe(true)
+  expect(parsePrefs({}, NAMES).compact).toBe(true)
+  expect(runSkinCommand('compact off', DEFAULT_PREFS, NAMES).prefs.compact).toBe(false)
+  expect(runSkinCommand('compact on', { ...DEFAULT_PREFS, compact: false }, NAMES).prefs.compact).toBe(true)
+  expect(runSkinCommand('compact maybe', DEFAULT_PREFS, NAMES).message).toBe('usage: /skin compact on|off')
+  expect(runSkinCommand('list', { ...DEFAULT_PREFS, compact: false }, NAMES).message).toContain('compact off')
+})
+
 test('cells are read as colours, diffs, numbers, code or text', async () => {
   expect(kindOfCell('#7aa2f7')).toBe('colour')
   expect(kindOfCell('+18 −3')).toBe('diff')

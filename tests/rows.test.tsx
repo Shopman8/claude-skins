@@ -105,8 +105,9 @@ async function startDesktop($: Engine, on: On) {
   await $.session.start({ surface: 'desktop', isInteractive: true, cwd: '/work' })
 }
 
-const svgSource = async (ui: { find: (q: { type: string }) => Promise<unknown> }) =>
-  ((await ui.find({ type: 'Svg' })) as { props: { source: string } } | undefined)?.props.source ?? ''
+// Every drawing in the mount: the usage band draws one per meter.
+const svgSource = async (ui: { findAll: (q: { type: string }) => Promise<unknown> }) =>
+  ((await ui.findAll({ type: 'Svg' })) as { props: { source: string } }[]).map(el => el.props.source).join('')
 
 const isSettled = (source: string) => source.includes('animation:none!important')
 
@@ -1009,6 +1010,62 @@ test('the band offers Compact, nudges at 70% context, and compacts on a press', 
   expect(await busy.find({ key: 'compact' })).toBeUndefined()
 })
 
+// Three meters, the context full enough for the nudge.
+const bandEngine = (on: On) => {
+  stubEngine(on, { usage: true })
+  on('session.usage', () => ({
+    value: {
+      startedAt: 0,
+      context: { window: 200000, percent: 85 },
+      rateLimits: [
+        { kind: 'five_hour', percentUsed: 36 },
+        { kind: 'seven_day', percentUsed: 28 },
+      ],
+    },
+  }))
+}
+
+const spreadsEvenly = async (ui: { findAll: (q: { type: string }) => Promise<unknown> }) =>
+  ((await ui.findAll({ type: 'Box' })) as { props: { justifyContent?: string; flexGrow?: number } }[]).some(
+    el => el.props.justifyContent === 'space-evenly' && el.props.flexGrow === 1,
+  )
+
+test('the band draws each meter on its own, sized to its words, spread evenly beside Compact', async ($, on) => {
+  bandEngine(on)
+  await startDesktop($, on)
+
+  const band = await $.ui.mount(BAND('desktop', false))
+  const meters = (await band.findAll({ type: 'Svg' })) as { props: { alt: string; width: number } }[]
+  expect(meters.map(el => el.props.alt)).toEqual([expect.stringContaining('context'), expect.stringContaining('5h'), expect.stringContaining('7d')])
+  // Each as wide as its ring and words, not a fixed 132px slot, so the gaps between them are what spreads.
+  for (const meter of meters) expect(meter.props.width).toBeLessThan(132)
+  expect(await spreadsEvenly(band)).toBe(true)
+  expect(await band.find({ key: 'compact' })).toBeDefined()
+  await band.unmount()
+
+  const line = await $.ui.mount(BAND('terminal', false))
+  expect(await spreadsEvenly(line)).toBe(true)
+})
+
+test('/skin compact off leaves the band to the meters, compact on brings the button back', async ($, on) => {
+  bandEngine(on)
+  await startDesktop($, on)
+
+  await runSkin($, 'compact off')
+  for (const surface of SURFACES) {
+    const band = await $.ui.mount(BAND(surface, false))
+    expect(await band.find({ key: 'compact' }), `${surface}: no button`).toBeUndefined()
+    expect(await band.find({ type: 'Text', text: 'Context is 85% full' }), `${surface}: no nudge`).toBeUndefined()
+    expect(await spreadsEvenly(band), `${surface}: the meters still spread`).toBe(true)
+    await band.unmount()
+  }
+
+  await runSkin($, 'compact on')
+  const band = await $.ui.mount(BAND('desktop', false))
+  expect(await band.find({ key: 'compact' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: 'Context is 85% full' })).toBeDefined()
+})
+
 test('cards draw no background of their own', async ($, on) => {
   stubEngine(on)
 
@@ -1517,7 +1574,7 @@ test('with countdown on, the band says when each limit resets, on both surfaces'
   await runSkin($, 'countdown on')
   const band = await $.ui.mount(BAND('desktop', false))
   expect(await svgSource(band)).toContain('5h · 1h40')
-  expect(((await band.find({ type: 'Svg' })) as { props: { alt: string } } | undefined)?.props.alt).toContain('5h 18%, resets in 1h40')
+  expect(((await band.findAll({ type: 'Svg' })) as { props: { alt: string } }[]).map(el => el.props.alt).join(', ')).toContain('5h 18%, resets in 1h40')
 
   const line = await $.ui.mount(BAND('terminal', false))
   expect(await line.find({ type: 'Text', text: ' 18% 5h · 1h40' })).toBeDefined()
@@ -1598,7 +1655,7 @@ test('more cards than the skin remembers still settle once instead of animating 
   }
 
   expect(perRound, 'one write settles every card in the first round and none is scheduled again').toEqual([1, 0, 0])
-  expect(isSettled(await svgSource(shells[0] ?? { find: async () => undefined })), 'the oldest card is settled').toBe(true)
+  expect(isSettled(await svgSource(shells[0] ?? { findAll: async () => [] })), 'the oldest card is settled').toBe(true)
 })
 
 test('a refused settle write is logged instead of left unhandled', async ($, on) => {

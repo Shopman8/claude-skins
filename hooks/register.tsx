@@ -599,7 +599,7 @@ export const register: Register = on => {
     await $.command.register({
       name: 'skin',
       description: 'Open the skin settings, or /skin <name | list | off>',
-      argumentHint: '[gallery | copy | copy code | name | list | off | calm | pin | unpin | share | rail | tables | shimmer | band | countdown | clip | markdown | quiet | charts | math | commands | shell | highlight | hints | links | fold | expand | icons | prompt | words]',
+      argumentHint: '[gallery | copy | copy code | name | list | off | calm | pin | unpin | share | rail | tables | shimmer | band | countdown | clip | markdown | quiet | charts | math | commands | shell | highlight | hints | links | fold | expand | compact | icons | prompt | words]',
       immediate: true,
     })
     const designTool = $.tool
@@ -1238,7 +1238,7 @@ reply width: ${lastColumns} columns`
       $,
       e,
       <Box flexDirection="column">
-        {usageBand(look, meters, !e.props.isWorking && !isCompacting, compact)}
+        {usageBand(look, meters, active.prefs.compact && !e.props.isWorking && !isCompacting, compact)}
         {theirs}
       </Box>,
     )

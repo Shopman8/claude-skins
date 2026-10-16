@@ -74,9 +74,11 @@ export function metersOf(usage: UsageSnap, countdowns: Record<string, string> = 
 export const meterColor = (percent: number, palette: Palette): string =>
   percent >= 95 ? palette.err : percent >= 80 ? palette.warn : palette.user
 
-export function usageSvg(meters: readonly Meter[], palette: Palette): { source: string; width: number; height: number; alt: string; entranceMs: number } {
+// `tight` sizes each meter to its ring and words, with no fixed slot, so a row can spread them evenly.
+export function usageSvg(meters: readonly Meter[], palette: Palette, tight = false): { source: string; width: number; height: number; alt: string; entranceMs: number } {
   // A meter with a countdown is wider than the rest; each starts where the one before ended.
-  const widths = meters.map(meter => Math.max(ITEM_W, Math.ceil(RING_R * 2 + 12 + measure(meterText(meter), false, TEXT_SIZE) + 20)))
+  const content = (meter: Meter) => RING_R * 2 + 12 + measure(meterText(meter), false, TEXT_SIZE)
+  const widths = meters.map(meter => (tight ? Math.ceil(content(meter) + 6) : Math.max(ITEM_W, Math.ceil(content(meter) + 20))))
   const starts = widths.map((_, i) => widths.slice(0, i).reduce((sum, w) => sum + w, 0))
   const width = widths.reduce((sum, w) => sum + w, 0)
   const height = 30
