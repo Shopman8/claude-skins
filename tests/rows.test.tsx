@@ -6,6 +6,7 @@ import { DESIGN_TOOL } from '../hooks/designer'
 import { widthOf } from '../hooks/markdown'
 import { mermaidArt } from '../hooks/mermaid-art'
 import { literal } from '../hooks/rows'
+import { cardWidth } from '../hooks/svg-kit'
 import noir from '../hooks/themes/noir'
 
 const SURFACES = ['terminal', 'desktop'] as const
@@ -702,6 +703,12 @@ test('a desktop card with a Copy button leaves its size to its markup, so one wi
   expect(svg).toBeDefined()
   expect(svg?.props.width).toBeUndefined()
   expect(svg?.props.height).toBeUndefined()
+})
+
+test('a card spans the reply column the desktop reports, within its range', async () => {
+  expect(cardWidth(106)).toBe(763)
+  expect(cardWidth(10)).toBe(480)
+  expect(cardWidth(400)).toBe(1600)
 })
 
 test('a card animates on its first draw only, so a streaming reply does not flicker', async ($, on) => {
