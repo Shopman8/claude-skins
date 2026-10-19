@@ -693,6 +693,17 @@ test('the desktop draws a table as an animated vector card, with a tooltip on a 
   expect(svg?.props.alt).toContain('Skin | Accent | Note')
 })
 
+test('a desktop card with a Copy button leaves its size to its markup, so one wider than the reply is scaled to fit', async ($, on) => {
+  stubEngine(on)
+
+  const ui = await $.ui.mount({ ...SITE, surface: 'desktop', component: 'AssistantMessage', requestId: 'r4', props: { text: '| a | b |\n|---|---|\n| 1 | 2 |', isFirstOfReply: true } })
+  const svg = (await ui.find({ type: 'Svg' })) as { props: { width?: number; height?: number } } | undefined
+
+  expect(svg).toBeDefined()
+  expect(svg?.props.width).toBeUndefined()
+  expect(svg?.props.height).toBeUndefined()
+})
+
 test('a card animates on its first draw only, so a streaming reply does not flicker', async ($, on) => {
   stubEngine(on)
 
